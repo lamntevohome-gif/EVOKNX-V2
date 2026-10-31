@@ -1,7 +1,7 @@
 name: evoknx_editor
 description: EVOKNX Editor - thiết kế giao diện điều khiển KNX cho Windows.
 publish_to: none
-version: 2.0.0+1
+version: 2.2.0+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'

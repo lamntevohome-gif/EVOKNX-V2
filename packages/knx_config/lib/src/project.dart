@@ -401,8 +401,9 @@ bool isFree(Json box, int x, int y, int w, int h, [String? except]) {
 
 const Map<String, List<int>> kDeviceDefaults = {'mobile': [12, 4], 'tabletP': [16, 6], 'tabletL': [10, 8]};
 
-/// Switches the active editing device (mobile/tabletP/tabletL), saving the
-/// current layout aside and restoring (or auto-placing) the target one.
+/// Switches the active editing device (mobile/tabletP/tabletL). Only the
+/// grid columns/rows change; widget cells stay fixed (clamped if the new
+/// grid is smaller).
 void switchDevice(Json proj, String nd) => _swapDevice(proj, nd);
 
 /// Exports a normalized copy with layouts for every enabled device.
@@ -446,34 +447,29 @@ void _swapDevice(Json proj, String nd) {
     final def = kDeviceDefaults[nd]!;
     l['columns'] = nl['columns'] ?? def[1];
     l['rows'] = nl['rows'] ?? def[0];
-    final need = <Json>[];
+    // Vị trí và kích thước widget giữ nguyên theo ô lưới (cố định giữa các
+    // bố cục) — chỉ kẹp lại khi vượt số cột/hàng của bố cục mới.
+    final cols = (l['columns'] as num).toInt();
+    final rows = (l['rows'] as num).toInt();
     for (final w in jsonList(s['widgets'])) {
       final pb = jsonMap(w['posBy']);
       pb[cur] = Map<String, dynamic>.from(jsonMap(w['pos']));
       w['posBy'] = pb;
-      if (pb[nd] != null) {
-        w['pos'] = Map<String, dynamic>.from(jsonMap(pb[nd]));
-      } else {
-        need.add(w);
-      }
-    }
-    if (need.isNotEmpty) {
-      final src = need.every((w) => jsonMap(w['posBy'])['mobile'] != null) ? 'mobile' : cur;
-      final placed = jsonList(s['widgets']).where((w) => !need.contains(w)).toList();
-      final tmp = <String, dynamic>{'layout': l, 'widgets': placed};
-      Json sp(Json w) => jsonMap(jsonMap(w['posBy'])[src] ?? w['pos']);
-      need.sort((a, b) {
-        final pa = sp(a), pbb = sp(b);
-        final c = (pa['y'] as num).compareTo(pbb['y'] as num);
-        return c != 0 ? c : (pa['x'] as num).compareTo(pbb['x'] as num);
-      });
-      for (final w in need) {
-        final o = sp(w);
-        final ww = min((o['w'] as num).toInt(), (l['columns'] as num).toInt());
-        final hh = (o['h'] as num).toInt();
-        final f = findFree(tmp, ww, hh);
-        w['pos'] = {'x': f.x, 'y': f.y, 'w': ww, 'h': hh};
-        placed.add(w);
+      final p = jsonMap(w['pos']);
+      final ox = (p['x'] as num?)?.toInt() ?? 0;
+      final oy = (p['y'] as num?)?.toInt() ?? 0;
+      final ow = (p['w'] as num?)?.toInt() ?? 1;
+      final oh = (p['h'] as num?)?.toInt() ?? 1;
+      var x = ox, y = oy, ww = ow, hh = oh;
+      if (ww > cols) ww = cols;
+      if (x + ww > cols) x = (cols - ww).clamp(0, cols);
+      if (hh > rows) hh = rows;
+      if (y + hh > rows) y = (rows - hh).clamp(0, rows);
+      if (x != ox || y != oy || ww != ow || hh != oh) {
+        p['x'] = x;
+        p['y'] = y;
+        p['w'] = ww;
+        p['h'] = hh;
       }
     }
   }

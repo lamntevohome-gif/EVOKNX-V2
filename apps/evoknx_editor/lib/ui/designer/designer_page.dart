@@ -5,6 +5,7 @@ import 'package:knx_config/knx_config.dart';
 import '../../app/theme.dart';
 import '../../state/project_controller.dart';
 import '../common.dart';
+import 'preview_page.dart';
 import 'properties_panel.dart';
 import 'widget_views.dart';
 
@@ -12,8 +13,14 @@ import 'widget_views.dart';
 /// Center: phone canvas with drag & drop, resize and grid snapping.
 /// Right: properties panel with group address bindings.
 class DesignerPage extends StatefulWidget {
-  const DesignerPage({super.key, required this.project});
+  const DesignerPage({super.key, required this.project, this.initialSubId, this.onExit});
   final ProjectController project;
+
+  /// Trang đang mở khi nhảy vào Designer từ màn hình Cấu trúc.
+  final String? initialSubId;
+
+  /// Nút quay lại Cấu trúc (nếu Designer được nhúng trong mục Cấu trúc).
+  final VoidCallback? onExit;
   @override
   State<DesignerPage> createState() => _DesignerPageState();
 }
@@ -23,6 +30,12 @@ class _DesignerPageState extends State<DesignerPage> {
   String? selWidget;
   String? selChild;
   double zoom = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    selSub = widget.initialSubId;
+  }
 
   // Live drag state (visual only — committed to the document once, on end).
   String? _moveId;
@@ -423,9 +436,8 @@ class _DesignerPageState extends State<DesignerPage> {
 
   Widget _canvasHeader(BuildContext context, Json? room) {
     final c = context.evo;
-    final d = p.doc;
-    final devs = jsonMap(d['devices']);
     final active = _activeDev;
+    final sub = _findSub(p.doc);
     final subs = room == null ? <Json>[] : jsonList(room['subpages']);
     Widget devChip(String dev, String label) {
       final on = dev == active;
@@ -434,7 +446,12 @@ class _DesignerPageState extends State<DesignerPage> {
         onTap: on
             ? null
             : () {
-                p.mutate((doc) => switchDevice(doc, dev));
+                p.mutate((doc) {
+                  switchDevice(doc, dev);
+                  final dd = jsonMap(doc['devices']);
+                  dd[dev] = true;
+                  doc['devices'] = dd;
+                });
                 setState(() => selWidget = selChild = null);
               },
         child: Container(
@@ -456,7 +473,14 @@ class _DesignerPageState extends State<DesignerPage> {
       decoration: BoxDecoration(color: c.panel, border: Border(bottom: BorderSide(color: c.line))),
       child: Row(
         children: [
-          Icon(Icons.smartphone, size: 17, color: c.muted),
+          if (widget.onExit != null)
+            IconButton(
+              tooltip: 'Về Cấu trúc',
+              onPressed: widget.onExit,
+              icon: const Icon(Icons.arrow_back, size: 19),
+            )
+          else
+            Icon(Icons.smartphone, size: 17, color: c.muted),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -492,9 +516,16 @@ class _DesignerPageState extends State<DesignerPage> {
                       ),
                     ),
                   devChip('mobile', 'Điện thoại'),
-                  if (devs['tabletP'] == true) ...[const SizedBox(width: 5), devChip('tabletP', 'Tablet dọc')],
-                  if (devs['tabletL'] == true) ...[const SizedBox(width: 5), devChip('tabletL', 'Tablet ngang')],
-                  _devMenu(context, devs),
+                  const SizedBox(width: 5),
+                  devChip('tabletP', 'Tablet dọc'),
+                  const SizedBox(width: 5),
+                  devChip('tabletL', 'Tablet ngang'),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Chạy thử — mô phỏng giao diện',
+                    onPressed: sub == null ? null : _runPreview,
+                    icon: const Icon(Icons.play_circle_outline, size: 21),
+                  ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     tooltip: 'Thu nhỏ',
@@ -517,31 +548,67 @@ class _DesignerPageState extends State<DesignerPage> {
     );
   }
 
-  Widget _devMenu(BuildContext context, Json devs) {
+  void _runPreview() {
+    final sub = _findSub(p.doc);
+    if (sub == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PreviewPage(project: p, initialSubId: sub['id'] as String)),
+    );
+  }
+
+  /// Thanh chọn tầng mô phỏng ở dưới khung — bấm để nhảy sang trang đầu
+  /// của tầng đó (giống app thật sẽ hiển thị).
+  Widget _floorStrip(BuildContext context, Json? sub) {
     final c = context.evo;
-    return PopupMenuButton<String>(
-      tooltip: 'Thiết bị bố cục',
-      position: PopupMenuPosition.under,
-      onSelected: (v) => p.mutate((d) {
-        final dd = jsonMap(d['devices']);
-        dd[v] = !(dd[v] == true);
-        d['devices'] = dd;
-      }),
-      itemBuilder: (_) => [
-        PopupMenuItem(value: 'tabletP', enabled: false, child: Row(children: [
-          Icon(devs['tabletP'] == true ? Icons.check_box_outlined : Icons.check_box_outline_blank, size: 18, color: devs['tabletP'] == true ? c.accent : c.muted),
-          const SizedBox(width: 8),
-          const Text('Bố cục tablet dọc (6 cột)', style: TextStyle(fontSize: 13)),
-        ])),
-        PopupMenuItem(value: 'tabletL', enabled: false, child: Row(children: [
-          Icon(devs['tabletL'] == true ? Icons.check_box_outlined : Icons.check_box_outline_blank, size: 18, color: devs['tabletL'] == true ? c.accent : c.muted),
-          const SizedBox(width: 8),
-          const Text('Bố cục tablet ngang (8 cột)', style: TextStyle(fontSize: 13)),
-        ])),
-      ],
-      child: const Padding(
-        padding: EdgeInsets.all(6),
-        child: Icon(Icons.devices_other, size: 19),
+    final d = p.doc;
+    final floors = jsonList(d['floors']);
+    if (floors.isEmpty) return const SizedBox.shrink();
+    final room = sub == null ? null : _roomOf(d, sub['id'] as String);
+    final curFloor = room?['floorId'] as String?;
+    Widget chip(Json f) {
+      final on = f['id'] == curFloor;
+      return InkWell(
+        borderRadius: BorderRadius.circular(6 * zoom),
+        onTap: () {
+          for (final r in jsonList(d['pages'])) {
+            if (r['floorId'] != f['id']) continue;
+            final subs = jsonList(r['subpages']);
+            if (subs.isNotEmpty) {
+              _select(sub: subs.first['id'] as String, widget: null);
+              return;
+            }
+          }
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 9 * zoom, vertical: 3 * zoom),
+          decoration: BoxDecoration(
+            color: on ? c.accentSoft : Colors.transparent,
+            border: Border.all(color: on ? c.accent : c.line),
+            borderRadius: BorderRadius.circular(6 * zoom),
+          ),
+          child: Text(
+            f['title'] as String? ?? '',
+            style: TextStyle(fontSize: 10.5 * zoom, fontWeight: FontWeight.w600, color: on ? c.accentInk : c.muted),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: EdgeInsets.only(top: 8 * zoom),
+      padding: EdgeInsets.only(top: 6 * zoom),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: c.line))),
+      child: Row(
+        children: [
+          Icon(Icons.stairs_outlined, size: 13 * zoom, color: c.muted),
+          SizedBox(width: 5 * zoom),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [for (final f in floors) Padding(padding: EdgeInsets.only(right: 5 * zoom), child: chip(f))]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -621,7 +688,12 @@ class _DesignerPageState extends State<DesignerPage> {
         border: Border.all(color: c.lineStrong, width: 1.5),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 18, offset: const Offset(0, 6))],
       ),
-      child: SizedBox(height: rows * unit, child: canvasStack()),
+      child: Column(
+        children: [
+          SizedBox(height: rows * unit, child: canvasStack()),
+          _floorStrip(context, sub),
+        ],
+      ),
     );
 
     return CallbackShortcuts(

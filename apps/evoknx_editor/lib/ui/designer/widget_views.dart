@@ -126,15 +126,17 @@ Widget _card(BuildContext context, Widget child, {EdgeInsets padding = const Edg
 
 Widget _head(BuildContext context, Json w, {Color? color}) {
   final c = context.evo;
+  final iconSize = (w['iconSize'] as num?)?.toDouble() ?? 17.0;
+  final labelSize = (w['labelSize'] as num?)?.toDouble() ?? 13.5;
   return Row(
     children: [
-      Icon(evoIcon(w['icon']), size: 17, color: color ?? c.muted),
+      Icon(evoIcon(w['icon']), size: iconSize, color: color ?? c.muted),
       const SizedBox(width: 6),
       Expanded(
         child: Text(
           (w['label'] as String?) ?? '',
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: c.ink),
+          style: TextStyle(fontSize: labelSize, fontWeight: FontWeight.w600, color: c.ink),
         ),
       ),
     ],
@@ -258,7 +260,7 @@ Widget _buttonView(BuildContext context, Json w) {
         child: Text(
           (w['label'] as String?) ?? '',
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.accentInk),
+          style: TextStyle(fontSize: (w['labelSize'] as num?)?.toDouble() ?? 13.0, fontWeight: FontWeight.w600, color: c.accentInk),
         ),
       ),
     ),
@@ -525,7 +527,7 @@ Widget _groupView(BuildContext context, Json w, int depth) {
             child: Text(
               (w['label'] as String?) ?? '',
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: c.muted),
+              style: TextStyle(fontSize: (w['labelSize'] as num?)?.toDouble() ?? 12.5, fontWeight: FontWeight.w600, color: c.muted),
             ),
           ),
         Expanded(

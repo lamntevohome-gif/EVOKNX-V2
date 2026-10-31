@@ -218,6 +218,38 @@ class PropertiesPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+        FieldLabel(
+          'Cỡ chữ tiêu đề',
+          EvoDropdown<double>(
+            width: double.infinity,
+            value: (w['labelSize'] as num?)?.toDouble() ?? 13.5,
+            items: const [
+              (12.0, 'Nhỏ (12)'),
+              (13.5, 'Vừa (13.5) — mặc định'),
+              (15.0, 'Lớn (15)'),
+              (17.0, 'To (17)'),
+              (20.0, 'Rất to (20)'),
+            ],
+            onChanged: (v) => _edit((_, x) => x['labelSize'] = v),
+          ),
+        ),
+        const SizedBox(height: 10),
+        FieldLabel(
+          'Cỡ biểu tượng',
+          EvoDropdown<double>(
+            width: double.infinity,
+            value: (w['iconSize'] as num?)?.toDouble() ?? 17.0,
+            items: const [
+              (14.0, 'Nhỏ (14)'),
+              (17.0, 'Vừa (17) — mặc định'),
+              (20.0, 'Lớn (20)'),
+              (24.0, 'To (24)'),
+              (28.0, 'Rất to (28)'),
+            ],
+            onChanged: (v) => _edit((_, x) => x['iconSize'] = v),
+          ),
+        ),
+        const SizedBox(height: 10),
         _sizeRow(context, sub, w),
         if (missing.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -423,6 +455,38 @@ class PropertiesPanel extends StatelessWidget {
               for (final name in kIconNames) (name, name),
             ],
             onChanged: (v) => _editChild((_, ch) => ch['icon'] = v),
+          ),
+        ),
+        const SizedBox(height: 10),
+        FieldLabel(
+          'Cỡ chữ tiêu đề',
+          EvoDropdown<double>(
+            width: double.infinity,
+            value: (child['labelSize'] as num?)?.toDouble() ?? 13.5,
+            items: const [
+              (12.0, 'Nhỏ (12)'),
+              (13.5, 'Vừa (13.5) — mặc định'),
+              (15.0, 'Lớn (15)'),
+              (17.0, 'To (17)'),
+              (20.0, 'Rất to (20)'),
+            ],
+            onChanged: (v) => _editChild((_, ch) => ch['labelSize'] = v),
+          ),
+        ),
+        const SizedBox(height: 10),
+        FieldLabel(
+          'Cỡ biểu tượng',
+          EvoDropdown<double>(
+            width: double.infinity,
+            value: (child['iconSize'] as num?)?.toDouble() ?? 17.0,
+            items: const [
+              (14.0, 'Nhỏ (14)'),
+              (17.0, 'Vừa (17) — mặc định'),
+              (20.0, 'Lớn (20)'),
+              (24.0, 'To (24)'),
+              (28.0, 'Rất to (28)'),
+            ],
+            onChanged: (v) => _editChild((_, ch) => ch['iconSize'] = v),
           ),
         ),
         const SizedBox(height: 16),

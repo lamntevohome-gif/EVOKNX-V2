@@ -3,13 +3,17 @@
 Phần mềm thiết kế và điều khiển giao diện nhà thông minh KNX của Evohome.
 
 > Repo **EVOKNX V2** — tách riêng khỏi repo V1, bao gồm đầy đủ Giai đoạn 2 (Thiết kế): canvas điện thoại, kéo thả widget, bảng thuộc tính và gán địa chỉ nhóm. Phiên bản bắt đầu từ 2.0.0.
+>
+> **2.1.0**: Thiết kế nằm ngay trong mục Cấu trúc (không còn tab riêng), thêm dashboard Tổng quan dự án (sơ đồ tầng → phòng), nút Thêm tầng nổi bật, và 3 bố cục Điện thoại / Tablet dọc / Tablet ngang luôn hiển thị.
+>
+> **2.2.0**: Chuyển bố cục chỉ thay đổi số cột/hàng — vị trí & kích thước widget cố định theo ô lưới; thêm **Chạy thử** (mô phỏng app bấm được, chưa gửi bus thật); chỉnh **cỡ chữ tiêu đề** và **cỡ biểu tượng** từng thành phần; thêm **thanh chọn tầng** ở dưới khung giao diện.
 
 ## Cấu trúc
 
 ```
 apps/evoknx_editor/   Ứng dụng Editor cho Windows (Flutter)
-  - Cấu trúc: quản lý tầng, phòng, trang
-  - Thiết kế: canvas điện thoại, thanh thành phần, kéo thả, bảng thuộc tính, gán địa chỉ nhóm
+  - Cấu trúc: tổng quan dự án (sơ đồ tầng → phòng), quản lý tầng, phòng, trang
+  - Thiết kế: nằm ngay trong mục Cấu trúc — canvas điện thoại & tablet, kéo thả, bảng thuộc tính, gán địa chỉ nhóm
   - Kết nối: kết nối KNX, địa chỉ nhóm, nhập từ ETS
   - Kiểm tra: theo dõi bus KNX thật, đọc/ghi địa chỉ
 packages/knx_core/    Thư viện KNX: KNXnet/IP tunneling, cEMI, DPT (Dart thuần, dùng chung với App mobile)

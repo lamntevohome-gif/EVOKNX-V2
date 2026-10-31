@@ -6,7 +6,6 @@ import '../state/bus_controller.dart';
 import '../state/project_controller.dart';
 import 'common.dart';
 import 'connections_page.dart';
-import 'designer/designer_page.dart';
 import 'import_dialog.dart';
 import 'structure_page.dart';
 import 'test_page.dart';
@@ -68,8 +67,7 @@ class _ShellState extends State<Shell> {
                   child: IndexedStack(
                     index: ws,
                     children: [
-                      StructurePage(project: p, onOpenDesigner: () => setState(() => ws = 1)),
-                      DesignerPage(project: p),
+                      StructurePage(project: p),
                       ConnectionsPage(project: p),
                       TestPage(project: p, bus: widget.bus),
                     ],
@@ -125,7 +123,7 @@ class _ShellState extends State<Shell> {
           ),
           const SizedBox(width: 18),
           Seg<int>(
-            items: const [(0, 'Cấu trúc'), (1, 'Thiết kế'), (2, 'Kết nối'), (3, 'Kiểm tra')],
+            items: const [(0, 'Cấu trúc'), (1, 'Kết nối'), (2, 'Kiểm tra')],
             value: ws,
             onChanged: (v) => setState(() => ws = v),
           ),

@@ -107,6 +107,13 @@ void main() {
   check(jsonMap(jsonMap(dsw['posBy'])['mobile'])['x'] == 0, 'switchDevice posBy');
   switchDevice(dd, 'mobile');
   check(jsonMap(dsw['pos'])['x'] == 0 && (jsonMap(dsub['layout'])['columns'] as num) == 4, 'switchDevice back');
+  // Bố cục cố định: kích thước widget không bị đổi khi chuyển thiết bị.
+  check(jsonMap(dsw['pos'])['w'] == 2 && jsonMap(dsw['pos'])['h'] == 2, 'switchDevice fixed size');
+  // Kẹp lại khi về lưới hẹp hơn: widget ở x=3 (w=2, lưới 4 cột) -> x=2.
+  jsonMap(dsw['pos'])['x'] = 3;
+  switchDevice(dd, 'tabletP');
+  switchDevice(dd, 'mobile');
+  check(jsonMap(dsw['pos'])['x'] == 2 && jsonMap(dsw['pos'])['w'] == 2, 'switchDevice clamp');
   stdout.writeln('knx_config selftest: $_p passed, $_f failed');
   exit(_f == 0 ? 0 : 1);
 }
